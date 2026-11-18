@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AI Adoption Meets High Scale Production</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;0,900;1,600;1,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout concept: a keyboard-driven deck, one slide per screen. Visuals carry the message; the words live in the speaker notes (press N). Dark engineering-terminal look from the earlier meetup deck. */
+:root{
+  --bg:#0d1524; --bg-2:#131e31; --panel:#17243b; --term:#0a111d;
+  --fg:#f4efe4; --dim:#93a6bd; --accent:#5ec8d8; --warm:#f2994a;
+  --olive:#bcc882; --green:#8fe3a0; --violet:#aa9ef0; --red:#ef6f6c;
+  --line:rgba(244,239,228,.13); --grid:rgba(94,200,216,.055);
+  --font-display:'Fraunces','Iowan Old Style','Palatino Linotype',serif;
+  --font-body:'IBM Plex Sans',-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;overflow:hidden}
+.deck{position:relative;height:100%;background:
+  linear-gradient(var(--grid) 1px,transparent 1px) 0 0/56px 56px,
+  linear-gradient(90deg,var(--grid) 1px,transparent 1px) 0 0/56px 56px,
+  radial-gradient(1200px 600px at 80% -10%,rgba(94,200,216,.08),transparent 60%),var(--bg);overflow:hidden}
+.topbar{position:absolute;z-index:5;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:12px;
+  padding:14px max(clamp(20px,4vw,44px),env(safe-area-inset-right,0px)) 8px max(clamp(20px,4vw,44px),env(safe-area-inset-left,0px));
+  font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.topbar b{color:var(--accent);font-weight:500}
+.progress{position:absolute;z-index:6;left:0;bottom:0;height:3px;background:var(--accent);width:0;transition:width .3s}
+.slide{--era:var(--accent);position:absolute;inset:0;display:none;overflow-y:auto;overflow-x:hidden;
+  padding-block:52px 76px;padding-left:max(clamp(20px,5vw,72px),env(safe-area-inset-left,0px));padding-right:max(clamp(20px,5vw,72px),env(safe-area-inset-right,0px))}
+.slide.active{display:flex}
+.in{margin:auto;width:100%;max-width:1180px;display:flex;flex-direction:column;gap:clamp(16px,2.6vh,30px);min-width:0}
+.rise>*{animation:rise .5s ease both}
+.rise>*:nth-child(2){animation-delay:.06s}.rise>*:nth-child(3){animation-delay:.12s}.rise>*:nth-child(4){animation-delay:.18s}
+@keyframes rise{from{transform:translateY(10px)}to{transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.rise>*{animation:none}.progress{transition:none}.blades{animation:none!important}}
+.eyebrow{font-family:var(--font-mono);font-size:clamp(18px,2.6vw,32px);letter-spacing:.12em;text-transform:uppercase;color:var(--era);display:flex;align-items:center;gap:14px}
+.eyebrow::before{content:"";width:32px;height:2px;background:var(--era);flex:none}
+h1,h2,h3{font-family:var(--font-display);font-weight:700;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(38px,7vw,92px);line-height:1.02;max-width:14ch}
+h2{font-size:clamp(28px,4.6vw,58px);line-height:1.08;max-width:20ch}
+h1 em,h2 em{font-style:italic;color:var(--era);font-weight:600}
+p{margin:0;line-height:1.5}
+.lead{font-size:clamp(16px,1.7vw,22px);color:var(--dim);max-width:46ch;line-height:1.45}
+.grid{display:grid;gap:clamp(10px,1.4vw,18px)}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.icon{width:44px;height:44px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;color:var(--c,var(--accent));flex:none}
+.icon.lg{width:72px;height:72px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:clamp(16px,2.2vw,30px);display:flex;flex-direction:column;gap:14px;align-items:flex-start;min-width:0}
+.tile .cap{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,2.2vw,30px);line-height:1.1}
+.tile .mono,.mono{font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--c,var(--dim))}
+.tile.hl{border-color:var(--c);background:color-mix(in srgb,var(--c) 9%,var(--panel))}
+.stat{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:12px;min-width:0}
+.stat .num{font-family:var(--font-display);font-weight:900;font-size:clamp(34px,5vw,70px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--c,var(--fg))}
+.stat .lbl{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);line-height:1.5}
+.hero{font-family:var(--font-display);font-weight:900;font-size:clamp(80px,22vw,260px);line-height:.85;letter-spacing:-.04em;color:var(--c,var(--accent));font-variant-numeric:tabular-nums}
+.term{background:var(--term);border:1px solid var(--line);border-radius:10px;padding:clamp(14px,1.6vw,22px);font-family:var(--font-mono);font-size:clamp(12px,1.2vw,15px);line-height:1.75;overflow-x:auto;white-space:pre-wrap;min-width:0}
+.term .t{color:var(--dim)}.term .ok{color:var(--green)}.term .bad{color:var(--red)}.term .w{color:var(--warm)}
+.meta{font-family:var(--font-mono);font-size:14px;color:var(--dim);display:flex;gap:12px;flex-wrap:wrap}
+.src{font-family:var(--font-mono);font-size:11px;color:var(--dim);letter-spacing:.04em}
+.notes{display:none}
+.eq{display:flex;align-items:flex-end;flex-wrap:wrap;gap:clamp(8px,1.6vw,22px)}
+.eq .n{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}
+.eq .v{font-family:var(--font-display);font-weight:900;font-size:clamp(56px,10vw,130px);line-height:.9;font-variant-numeric:tabular-nums}
+.eq .v.big{font-size:clamp(64px,14vw,180px)}
+.eq .op{font-family:var(--font-display);font-size:clamp(32px,5.5vw,70px);color:var(--dim);line-height:.9;padding-bottom:clamp(22px,2.6vw,34px)}
+.eq .lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.eq .strike .v::after{content:"";position:absolute;left:-10%;right:-10%;top:36%;height:6px;background:var(--red);transform:rotate(-14deg);border-radius:3px}
+.diagram{width:100%;max-width:100%;height:auto;display:block}
+.diagram text{font-family:var(--font-mono);fill:var(--fg)}
+.dm{fill:var(--dim)!important}.ac{fill:var(--accent)!important}.wm{fill:var(--warm)!important}.gr{fill:var(--green)!important}.rd{fill:var(--red)!important}.vi{fill:var(--violet)!important}
+.divider .part{font-family:var(--font-mono);font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+.divider .word{font-family:var(--font-display);font-weight:900;font-size:clamp(56px,13vw,190px);line-height:.9;letter-spacing:-.035em;color:var(--era);margin:0}
+/* timeline */
+.tl{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin-top:24px}
+.tn{position:relative;border-top:2px solid var(--line);padding:22px 14px 0 0;display:flex;flex-direction:column;gap:8px;min-width:0}
+.tn i{position:absolute;top:-9px;left:0;width:16px;height:16px;border-radius:50%;background:var(--c);box-shadow:0 0 0 5px var(--bg)}
+.tn b{font-family:var(--font-display);font-size:clamp(17px,1.9vw,26px);line-height:1.1}
+/* pipeline bars */
+.cols{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(8px,1.4vw,18px);align-items:end}
+.col{display:flex;flex-direction:column;gap:10px;align-items:center;min-width:0}
+.col .bar{width:100%;height:calc(var(--h)*2.4px);border-radius:8px 8px 0 0;background:var(--c);opacity:.9}
+.col .lb{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.status{display:inline-flex;align-items:center;gap:7px}
+.status i{width:9px;height:9px;border-radius:50%;background:var(--c)}
+.rowmig{display:grid;grid-template-columns:minmax(0,1fr) 44px minmax(0,1fr) auto;gap:12px;align-items:center}
+.chipb{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-family:var(--font-display);font-weight:700;font-size:clamp(17px,2vw,26px);min-width:0}
+.chipb.new{border-color:var(--green);color:var(--green)}
+.chipb.old{color:var(--dim)}
+.arrowx{font-family:var(--font-mono);color:var(--dim);text-align:center;font-size:20px}
+.nav{position:absolute;z-index:6;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:8px max(clamp(16px,3vw,32px),env(safe-area-inset-right,0px)) 12px max(clamp(16px,3vw,32px),env(safe-area-inset-left,0px));pointer-events:none}
+.nav button{pointer-events:auto;font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg);background:rgba(23,36,59,.92);border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer}
+.nav button:hover{border-color:var(--accent)}
+.nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav .grp{display:flex;gap:8px}
+.notes-panel{position:absolute;z-index:7;left:0;right:0;bottom:0;background:var(--bg-2);border-top:1px solid var(--line);
+  padding:14px max(clamp(20px,5vw,72px),env(safe-area-inset-right,0px)) 62px max(clamp(20px,5vw,72px),env(safe-area-inset-left,0px));max-height:46%;overflow-y:auto;display:none}
+.notes-panel.open{display:block}
+.notes-panel .lb{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--warm);margin-bottom:6px}
+.notes-panel p{max-width:90ch;font-size:15px;color:var(--fg)}
+.blades{transform-box:fill-box;transform-origin:center;animation:spin 14s linear infinite}
+.blades.fast{animation-duration:7s}
+@keyframes sway{from{transform:skewX(-7deg)}to{transform:skewX(11deg)}}
+@keyframes wind{to{stroke-dashoffset:-320}}
+.grass{transform-box:fill-box;transform-origin:50% 100%;animation:sway 2.2s ease-in-out infinite alternate}
+.windline{stroke-dasharray:110 90;animation:wind 4s linear infinite}
+@media (prefers-reduced-motion:reduce){.grass,.windline{animation:none}.blades.fast{animation:none}}
+@media (max-width:820px){
+  .g3,.g4,.g5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tl{grid-template-columns:1fr;gap:18px}.tn{border-top:0;border-left:2px solid var(--line);padding:0 0 0 22px}.tn i{top:2px;left:-9px}
+  .rowmig{grid-template-columns:minmax(0,1fr) 30px minmax(0,1fr)}.rowmig .mono{grid-column:1/-1}
+}
+@media (max-width:560px){
+  .g2,.g3,.g4,.g5{grid-template-columns:minmax(0,1fr)}
+  .cols{gap:6px}.col .lb{font-size:9px;letter-spacing:.02em}
+  .nav .hint{display:none}
+}
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-code" viewBox="0 0 24 24"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/><line x1="14" y1="4" x2="10" y2="20"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/><line x1="7.5" y1="15" x2="16.5" y2="15"/></symbol>
+  <symbol id="i-stairs" viewBox="0 0 24 24"><path d="M3 20h5v-5h5v-5h5V5h3"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-siren" viewBox="0 0 24 24"><path d="M7 18v-6a5 5 0 0 1 10 0v6M4.5 18h15M12 2v2M4.2 5.2l1.4 1.4M19.8 5.2l-1.4 1.4"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M3 21l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L7 20z"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 19V5a2 2 0 0 1 2-2h13v15H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 0 2 2h13v-3"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="20"/></symbol>
+  <symbol id="i-graph" viewBox="0 0 24 24"><circle cx="5" cy="6" r="2.4"/><circle cx="19" cy="6" r="2.4"/><circle cx="12" cy="19" r="2.4"/><path d="M7.2 7l3.6 9.8M16.8 7l-3.6 9.8M7.5 6h9"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-two" viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><line x1="16" y1="16" x2="21" y2="21"/></symbol>
+  <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9l1.5-5h13L20 9"/><path d="M4 9a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0A2.7 2.7 0 0 0 20 9"/><path d="M5 12v8h14v-8"/></symbol>
+</defs></svg>
+
+<div class="deck" id="deck">
+  <div class="topbar"><span><b>AI adoption</b> meets high scale production</span><span id="counter">01 / 23</span></div>
+
+  <!-- 1 COVER -->
+  <section class="slide active" style="--era:var(--accent)">
+    <canvas id="coverArt" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas>
+    <div class="in rise" style="position:relative;z-index:1">
+    <h1>AI adoption meets <em>high scale production</em></h1>
+    <div class="meta"><span>Ruli Weisbach</span><span>/</span><span>EVP of R&amp;D, AppsFlyer</span></div>
+    <aside class="notes">Welcome. Everyone here knows AI can write code. This talk is about the part after: getting AI-written code safely into a production system that processes about 400 billion events a day. Four parts: who we are and our scale, the AI mania and how far it took us, the bottlenecks we hit, and how we move forward under that reality.</aside>
+  </div></section>
+
+  <!-- 2 BEFORE -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">Before AppsFlyer</div>
+    <h2>Everyone wired <em>to everyone</em></h2>
+    <svg class="diagram" id="meshBefore" viewBox="0 0 900 330" role="img" aria-label="Every brand connected to every partner with its own integration"></svg>
+    <aside class="notes">Before AppsFlyer, every brand integrated separately with every ad network and partner. Each one measured differently and nobody had one trusted view of what worked.</aside>
+  </div></section>
+
+  <!-- 3 AFTER -->
+  <section class="slide" style="--era:var(--green)"><div class="in rise">
+    <div class="eyebrow">After AppsFlyer</div>
+    <h2>Integrate once. <em>Connect to everything.</em></h2>
+    <svg class="diagram" id="meshAfter" viewBox="0 0 900 330" role="img" aria-label="Brands and partners each connect once to AppsFlyer in the middle"></svg>
+    <aside class="notes">With AppsFlyer in the middle, a brand integrates once and connects to the whole ecosystem, with over 10,000 partners. One neutral source of truth. Sitting in the middle is exactly why our production system has to be right.</aside>
+  </div></section>
+
+  <!-- 4 SCALE -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow" style="font-size:clamp(20px,3vw,38px);letter-spacing:.12em;gap:14px">Every single day</div>
+    <div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:clamp(12px,2vw,28px)"><div class="hero" style="--c:var(--accent)">400B</div><span style="font-family:var(--font-display);font-style:italic;font-weight:600;font-size:clamp(26px,4.4vw,60px);color:var(--accent)">Engagements</span></div>
+    <div class="grid g3" style="gap:clamp(14px,2.4vw,34px)">
+      <div class="stat" style="--c:var(--warm)"><span class="num">20,000</span><span class="lbl">AWS instances</span></div>
+      <div class="stat" style="--c:var(--green)"><span class="num">30PB</span><span class="lbl">Of data</span></div>
+      <div class="stat" style="--c:var(--violet)"><span class="num">~1,000</span><span class="lbl">Services</span></div>
+    </div>
+    <aside class="notes">400 billion events a day, sometimes more, all processed before we show the customer one number on a dashboard. About 20,000 instances in AWS, 30 petabytes of data and roughly a thousand services. Five years ago the same attribution system handled about 20 billion events a day. Mention the ad clicks, ad views, app events and conversions breakdown if you want more detail: 120B clicks, 180B views, 40B app events, 250M conversions.</aside>
+  </div></section>
+
+  <!-- 5 SMALL BUG -->
+  <section class="slide" style="--era:var(--red)"><div class="in rise">
+    <div class="eyebrow">At this size</div>
+    <h2>A small bug is <em>never small</em></h2>
+    <svg class="diagram" viewBox="0 0 900 300" role="img" aria-label="A single small bug spreading into billions of events">
+      <g fill="none" stroke="#ef6f6c">
+        <circle cx="450" cy="150" r="140" stroke-opacity=".14" stroke-width="2"/>
+        <circle cx="450" cy="150" r="96" stroke-opacity=".26" stroke-width="2"/>
+        <circle cx="450" cy="150" r="56" stroke-opacity=".45" stroke-width="2"/>
+        <circle cx="450" cy="150" r="26" stroke-opacity=".7" stroke-width="2"/>
+      </g>
+      <circle cx="450" cy="150" r="8" fill="#ef6f6c"/>
+      <text x="450" y="188" text-anchor="middle" font-size="13" class="rd">1 line</text>
+      <text x="450" y="290" text-anchor="middle" font-size="13" class="dm">minutes later</text>
+      <text x="620" y="152" font-size="14" class="dm">billions of events</text>
+    </svg>
+    <aside class="notes">Someone asked me two years ago: what happens if you lose a million events? I said, what happens if you wake up with a scratchy throat? A million is nothing at this scale. The flip side is that a small bug reaches billions of events within minutes. That is the environment AI-written code has to land in.</aside>
+  </div></section>
+
+  <!-- 6 DIVIDER 02 -->
+  <section class="slide divider" style="--era:var(--violet)"><div class="in rise">
+    <div class="part">Part 02</div>
+    <p class="word" style="font-size:clamp(46px,10vw,150px)">AI mania begins</p>
+    <aside class="notes">Part two. In the beginning we went full power on coding with AI.</aside>
+  </div></section>
+
+  <!-- NEW CEO -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">The call</div>
+    <h2>Everyone <em>moves to AI</em></h2>
+    <svg class="diagram" id="ceoArt" viewBox="0 0 900 340" role="img" aria-label="A CEO with a megaphone tells the whole company to move to AI while a token gauge goes off the scale">
+      <path d="M80 78 L100 108 L130 78" fill="#17243b" stroke="#f2994a" stroke-width="2"/>
+      <rect x="20" y="4" width="300" height="74" rx="14" fill="#17243b" stroke="#f2994a" stroke-width="2"/>
+      <line x1="83" y1="78" x2="127" y2="78" stroke="#17243b" stroke-width="4"/>
+      <text x="170" y="36" text-anchor="middle" font-size="21" font-weight="500" class="wm">ALL IN ON AI!</text><text x="170" y="64" text-anchor="middle" font-size="21" font-weight="500" class="rd">AI OR DIE</text>
+      <path d="M52 305 Q52 192 100 182 Q148 192 148 305 Z" fill="#17243b" stroke="#93a6bd" stroke-width="2"/>
+      <circle cx="100" cy="140" r="25" fill="#17243b" stroke="#f4efe4" stroke-width="2"/>
+      <path d="M100 186 L92 212 L100 256 L108 212 Z" fill="#ef6f6c"/>
+      <rect x="126" y="206" width="16" height="12" rx="3" fill="#93a6bd"/>
+      <path d="M142 200 L192 170 L192 232 L142 218 Z" fill="#f2994a"/>
+      <g fill="none" stroke="#f2994a" stroke-width="3" stroke-linecap="round"><path d="M204 186 Q220 201 204 216"/><path d="M218 172 Q246 201 218 230"/><path d="M232 158 Q274 201 232 244"/></g>
+      <text x="100" y="328" text-anchor="middle" font-size="12" class="dm">CEO</text>
+      <path d="M700 250 A80 80 0 0 1 860 250" fill="none" stroke="#93a6bd" stroke-opacity=".4" stroke-width="12"/>
+      <path d="M841.3 198.6 A80 80 0 0 1 860 250" fill="none" stroke="#ef6f6c" stroke-width="12"/>
+      <line x1="780" y1="250" x2="852.5" y2="283.8" stroke="#f2994a" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="780" cy="250" r="9" fill="#f2994a"/>
+      <g stroke="#ef6f6c" stroke-width="3" stroke-linecap="round"><line x1="868" y1="270" x2="884" y2="262"/><line x1="868" y1="288" x2="888" y2="290"/><line x1="860" y1="304" x2="874" y2="316"/></g>
+      <text x="780" y="326" text-anchor="middle" font-size="13" class="dm">TOKENS</text>
+    </svg>
+    <aside class="notes">At some point our CEO told the whole company: we are all moving to AI. Everyone. The message was clear and people took it seriously, so we rolled out the tools and token usage went through the roof, the gauge past the red zone. Tell it your way; the funny part is that nobody wanted to be the one not using AI.</aside>
+  </div></section>
+
+  <!-- 8 TOOLS -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow">The tools</div>
+    <h2>All in. <em>Three tools.</em></h2>
+    <div class="grid g3">
+      <div class="tile hl" style="--c:var(--accent)"><svg class="icon lg"><use href="#i-terminal"/></svg><span class="cap">Claude Code</span><span class="mono">Terminal</span></div>
+      <div class="tile hl" style="--c:var(--violet)"><svg class="icon lg"><use href="#i-window"/></svg><span class="cap">Cursor</span><span class="mono">IDE</span></div>
+      <div class="tile hl" style="--c:var(--green)"><svg class="icon lg"><use href="#i-code"/></svg><span class="cap">Copilot</span><span class="mono">GitHub</span></div>
+    </div>
+    <aside class="notes">We rolled out three tools at once: Claude Code for terminal-first agentic coding, Cursor for IDE-integrated assistance, and GitHub Copilot. Nobody had to be convinced twice; the message from the top was clear.</aside>
+  </div></section>
+
+  <!-- NEW PROJECT 9000 -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow" style="font-size:clamp(22px,3.6vw,46px);letter-spacing:.12em;gap:14px">Project 9000</div>
+    <div class="eq">
+      <div class="n"><span class="v">3</span><span class="lbl">Hard problems</span></div><span class="op">&times;</span>
+      <div class="n"><span class="v">1</span><span class="lbl">Engineer each</span></div><span class="op">&times;</span>
+      <div class="n"><span class="v">3</span><span class="lbl">Months</span></div><span class="op">=</span>
+      <div class="n strike"><span class="v" style="color:var(--dim)">9</span><span class="lbl">Without AI</span></div><span class="op">&rarr;</span>
+      <div class="n"><span class="v big" style="color:var(--green)">9000</span><span class="lbl">With AI</span></div>
+    </div>
+    <div class="grid g3">
+      <div class="tile hl" style="--c:var(--green)"><span class="cap">In-memory &rarr; batch attribution</span><span class="mono">Postponed 4 years</span></div>
+      <div class="tile hl" style="--c:var(--accent)"><span class="cap">Merge 3 platforms into one</span><span class="mono">3 &rarr; 1</span></div>
+      <div class="tile hl" style="--c:var(--violet)"><span class="cap">Neo4j &rarr; Postgres</span><span class="mono">Postponed 5 years</span></div>
+    </div>
+    <aside class="notes">Project 9000: we took three hard problems that, without AI, were each estimated at months of work for one engineer. We gave each problem one engineer and three months, with AI only and full tooling. Three problems times one engineer times three months is a 9 on paper; the name 9000 is the bet that with AI it would not be 9, it would be something of a different order. And it worked: we showed we can code them easily with AI. Moving attribution from in-memory to batch processing had been postponed for four years, merging three platforms into one replaced a fragmented ingestion system across 20 networks, and the Neo4j to Postgres migration had been postponed for five years. Confirm the three problems shown and add the production outcomes you want to share. Project 9000 was also an accelerator for adoption: it showed everyone what was possible.</aside>
+  </div></section>
+
+  <!-- NEW NUMBERS -->
+  <section class="slide" style="--era:var(--green)"><div class="in rise">
+    <div class="eyebrow">How far it went</div>
+    <h2>Most engineers. <em>Most code.</em></h2>
+    <div class="grid g3" style="gap:clamp(14px,2.4vw,34px);align-items:end">
+      <div class="stat" style="--c:var(--green)"><span class="num">94%</span><span class="lbl">Engineers using AI tools</span></div>
+      <div class="stat" style="--c:var(--accent)"><span class="num">56%</span><span class="lbl">Merge requests generated by AI</span></div>
+      <div class="stat" style="--c:var(--warm)"><svg class="diagram" id="tokenChart" viewBox="0 0 400 215" role="img" aria-label="Monthly token usage rising steeply"></svg><span class="lbl">Tokens per month</span></div>
+    </div>
+    <aside class="notes">94% of our engineers use AI tools, and 56% of merge requests are AI-generated. The token chart shows the trend of rapid growth in usage; it is a schematic shape, not exact monthly values. The message: most engineers use AI tools and more than half of the code changes are now generated by AI.</aside>
+  </div></section>
+
+  <!-- 11 DIVIDER 03 -->
+  <section class="slide divider" style="--era:var(--warm)"><div class="in rise">
+    <div class="part">Part 03</div>
+    <p class="word">Bottlenecks</p>
+    <svg class="diagram" id="wallArt" style="max-height:200px" viewBox="0 0 900 190" role="img" aria-label="A rocket labelled AI code crashes into a brick wall labelled test, rollout, production">
+      <line x1="0" y1="170" x2="900" y2="170" stroke="#93a6bd" stroke-opacity=".4"/>
+      <g stroke="#93a6bd" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"><line x1="210" y1="90" x2="330" y2="90"/><line x1="170" y1="110" x2="320" y2="110"/><line x1="230" y1="130" x2="330" y2="130"/></g>
+      <path d="M400 100 L360 110 L400 120 Z" fill="#f2994a"/>
+      <path d="M412 94 L394 72 L434 94 Z" fill="#ef6f6c"/><path d="M412 126 L394 148 L434 126 Z" fill="#ef6f6c"/>
+      <rect x="400" y="94" width="145" height="32" rx="16" fill="#17243b" stroke="#5ec8d8" stroke-width="2"/>
+      <path d="M545 94 L596 110 L545 126 Z" fill="#f2994a"/>
+      <circle cx="515" cy="110" r="7" fill="#5ec8d8"/>
+      <text x="455" y="115" text-anchor="middle" font-size="12">AI CODE</text>
+      <text x="730" y="16" text-anchor="middle" font-size="11" class="dm">TEST · ROLLOUT · PROD</text>
+    </svg>
+    <aside class="notes">Part three. Then we hit the bottlenecks. Coding got fast, and everything after it did not: the AI-written code arrived at the same wall of testing, rollout to production, monitoring, incidents and design decisions.</aside>
+  </div></section>
+
+  <!-- 12 10X -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">The trap</div>
+    <h2>10× the code is not <em>10× the value</em></h2>
+    <svg class="diagram" viewBox="0 0 900 320" role="img" aria-label="Code output grows 10 times; value and incidents are unknown">
+      <line x1="60" y1="270" x2="840" y2="270" stroke="#93a6bd" stroke-opacity=".4"/>
+      <rect x="150" y="30" width="120" height="240" rx="8" fill="#8fe3a0"/>
+      <text x="210" y="22" text-anchor="middle" font-size="22" class="gr">10×</text>
+      <text x="210" y="298" text-anchor="middle" font-size="13" class="dm">CODE</text>
+      <rect x="390" y="190" width="120" height="80" rx="8" fill="none" stroke="#f2994a" stroke-width="2" stroke-dasharray="7 6"/>
+      <text x="450" y="238" text-anchor="middle" font-size="34" class="wm">?</text>
+      <text x="450" y="298" text-anchor="middle" font-size="13" class="dm">VALUE</text>
+      <rect x="630" y="60" width="120" height="210" rx="8" fill="none" stroke="#ef6f6c" stroke-width="2" stroke-dasharray="7 6"/>
+      <text x="690" y="176" text-anchor="middle" font-size="34" class="rd">?</text>
+      <text x="690" y="298" text-anchor="middle" font-size="13" class="dm">BUGS · INCIDENTS</text>
+    </svg>
+    <aside class="notes">Something I read the morning of the recording: 10x faster coding does not mean 10x faster productivity and does not mean 10x better success. It can mean the opposite. If developers suddenly produce ten times the code, you can get ten times the bugs, incidents and unhappy customers, including customers annoyed that the product changes every two days. Bar heights are illustrative.</aside>
+  </div></section>
+
+  <!-- 13 PIPELINE MAP -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">Where the time goes</div>
+    <h2>Code got fast. <em>The rest did not.</em></h2>
+    <div class="cols">
+      <div class="col"><div class="bar" style="--h:78;--c:var(--warm)"></div><svg class="icon" style="--c:var(--warm)"><use href="#i-pencil"/></svg><span class="lb">Design</span></div>
+      <div class="col"><div class="bar" style="--h:20;--c:var(--green)"></div><svg class="icon" style="--c:var(--green)"><use href="#i-code"/></svg><span class="lb">Code</span></div>
+      <div class="col"><div class="bar" style="--h:114;--c:var(--warm)"></div><svg class="icon" style="--c:var(--warm)"><use href="#i-flask"/></svg><span class="lb">Test</span></div>
+      <div class="col"><div class="bar" style="--h:70;--c:var(--warm)"></div><svg class="icon" style="--c:var(--warm)"><use href="#i-stairs"/></svg><span class="lb">Rollout</span></div>
+      <div class="col"><div class="bar" style="--h:60;--c:var(--warm)"></div><svg class="icon" style="--c:var(--warm)"><use href="#i-eye"/></svg><span class="lb">Monitor</span></div>
+      <div class="col"><div class="bar" style="--h:117;--c:var(--red)"></div><svg class="icon" style="--c:var(--red)"><use href="#i-siren"/></svg><span class="lb">Incident</span></div>
+    </div>
+    <p class="src">Illustrative</p>
+    <aside class="notes">Even before AI, coding was not the biggest share of the time it takes to deliver something to production. A senior leader at Amazon told me the same. Now that AI writes the code, that is even more visible. The remaining time sits in design decisions, testing, gradual rollout, monitoring the impact of each change, and incident management. Bar heights are my sense of the picture, not measured data. The next slides go through design, testing, monitoring and incidents.</aside>
+  </div></section>
+
+  <!-- 14 DESIGN LOOP -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">Bottleneck 1 · Design</div>
+    <h2>The <em>long loop</em></h2>
+    <svg class="diagram" viewBox="0 0 900 260" role="img" aria-label="Spec, design, build, then three weeks later discovered not feasible and sent back to spec">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#93a6bd"/></marker>
+      <marker id="ahr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ef6f6c"/></marker></defs>
+      <g font-size="16">
+        <rect x="30" y="80" width="150" height="70" rx="10" fill="#17243b" stroke="#93a6bd"/><text x="105" y="122" text-anchor="middle">Spec</text>
+        <rect x="260" y="80" width="150" height="70" rx="10" fill="#17243b" stroke="#93a6bd"/><text x="335" y="122" text-anchor="middle">Design</text>
+        <rect x="490" y="80" width="150" height="70" rx="10" fill="#17243b" stroke="#93a6bd"/><text x="565" y="122" text-anchor="middle">Build</text>
+        <rect x="720" y="80" width="150" height="70" rx="10" fill="rgba(239,111,108,.12)" stroke="#ef6f6c"/><text x="795" y="112" text-anchor="middle" class="rd">Not</text><text x="795" y="134" text-anchor="middle" class="rd">feasible</text>
+      </g>
+      <line x1="182" y1="115" x2="256" y2="115" stroke="#93a6bd" stroke-width="2" marker-end="url(#ah)"/>
+      <line x1="412" y1="115" x2="486" y2="115" stroke="#93a6bd" stroke-width="2" marker-end="url(#ah)"/>
+      <line x1="642" y1="115" x2="716" y2="115" stroke="#ef6f6c" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ahr)"/>
+      <path d="M795 152 C795 235 105 235 105 154" fill="none" stroke="#ef6f6c" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ahr)"/>
+      <text x="450" y="226" text-anchor="middle" font-size="14" class="rd">3 weeks later</text>
+      <text x="450" y="52" text-anchor="middle" font-size="13" class="dm">~1,000 services</text>
+    </svg>
+    <aside class="notes">The first bottleneck is the back-and-forth between product and R&amp;D. Product comes with an initial spec, R&amp;D starts the design, and three weeks later we find the spec is not feasible, or needs a huge refactor. One recent project took over a year and a half for these reasons. With around a thousand services, nobody can sit for a day and know what a change touches. This is what Track 1 attacks: use AI early, scanning all our repos, to estimate which services a requirement touches and how complex it is, before anyone commits.</aside>
+  </div></section>
+
+  <!-- 15 TESTING -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">Bottleneck 2 · Testing</div>
+    <h2>Proof takes <em>weeks</em></h2>
+    <svg class="diagram" viewBox="0 0 900 200" role="img" aria-label="Implementation takes one to two days, verification takes weeks">
+      <text x="0" y="52" font-size="13" class="dm">BUILD</text>
+      <rect x="110" y="30" width="80" height="34" rx="6" fill="#8fe3a0"/><text x="205" y="53" font-size="14" class="gr">1–2 days</text>
+      <text x="0" y="132" font-size="13" class="dm">VERIFY</text>
+      <rect x="110" y="110" width="760" height="34" rx="6" fill="#f2994a"/><text x="124" y="133" font-size="14" fill="#0a111d" style="fill:#0a111d">weeks, per network</text>
+    </svg>
+    <div class="term" style="max-width:520px"><span class="ok">●</span> 90% of the rows match
+<span class="bad">AI</span>    "Good enough."
+<span class="w">Human</span> "Show me the other 10%."</div>
+    <aside class="notes">On the merge-three-platforms project, implementation took one or two days per network and verification took weeks. Testing and verification were consistently the longest phase. The AI is also over-optimistic about its own results: it reported that 90 percent of cost rows matched and called it good enough, and a person had to push for the rest. That is why humans define the test scope. Track 3 helps: agents already propose and fix unit tests and CI failures on pull requests, and create production-grade test data in dev environments. Bar lengths are illustrative.</aside>
+  </div></section>
+
+  <!-- 17 MONITORING -->
+  <section class="slide" style="--era:var(--warm)"><div class="in rise">
+    <div class="eyebrow">Bottleneck 4 &middot; Monitoring</div>
+    <h2>Which change <em>caused the incident?</em></h2>
+    <svg class="diagram" id="impactChart" viewBox="0 0 900 360" role="img" aria-label="With AI coding, engineers generate more merge requests faster and push more to production. Before AI a metric spike lines up with one obvious deploy; with AI there are so many deploys that nobody can tell which one caused it.">
+      <g font-size="14">
+        <rect x="20" y="12" width="180" height="52" rx="10" fill="#17243b" stroke="#5ec8d8" stroke-width="1.5"/><text x="110" y="44" text-anchor="middle">AI + engineers</text>
+        <line x1="208" y1="38" x2="276" y2="38" stroke="#f2994a" stroke-width="3"/><path d="M270 30 L282 38 L270 46" fill="none" stroke="#f2994a" stroke-width="3"/>
+        <text x="244" y="26" text-anchor="middle" font-size="11" class="wm">MORE · FASTER</text>
+        <g id="mrStack"></g>
+        <line x1="466" y1="38" x2="606" y2="38" stroke="#f2994a" stroke-width="3"/><path d="M600 30 L612 38 L600 46" fill="none" stroke="#f2994a" stroke-width="3"/>
+        <rect x="620" y="12" width="180" height="52" rx="10" fill="#17243b" stroke="#f2994a" stroke-width="1.5"/><text x="710" y="44" text-anchor="middle">Production</text>
+      </g>
+      <text x="20" y="116" font-size="12" class="dm">BEFORE AI</text>
+      <text x="20" y="262" font-size="12" class="dm">WITH AI</text>
+      <g id="panelA"></g><g id="panelB"></g>
+    </svg>
+    <aside class="notes">With AI coding, engineers generate more merge requests, faster, and push much more to production. Before AI, a handful of deploys went out; when a metric spiked you could line it up with the one change that went out just before it. Now dozens of changes reach production in the same window, and when something breaks or a graph moves, it is hard to understand which change caused it. We also measure adoption, meaning whether customers actually use what we shipped, and watch production behavior, but more changes in flight makes attribution harder. The pressure shifts from writing code to integration and production, and it shows up as incidents that we then have to handle. Chart is illustrative.</aside>
+  </div></section>
+
+  <!-- 19 DIVIDER 04 -->
+  <section class="slide divider" style="--era:var(--green)"><div class="in rise">
+    <div class="part">Part 04</div>
+    <p class="word">Moving forward</p>
+    <svg class="diagram" style="max-height:220px" viewBox="0 0 900 220" role="img" aria-label="A wagon full of AI tokens stuck in mud is pulled out onto dry ground">
+      <g fill="#f2994a">
+        <circle cx="215" cy="56" r="14"/><circle cx="245" cy="56" r="14"/><circle cx="275" cy="56" r="14"/><circle cx="305" cy="56" r="14"/><circle cx="335" cy="56" r="14"/>
+        <circle cx="230" cy="30" r="14"/><circle cx="260" cy="30" r="14"/><circle cx="290" cy="30" r="14"/><circle cx="320" cy="30" r="14"/><circle cx="275" cy="6" r="14"/>
+      </g>
+      <g font-size="13" font-weight="500" text-anchor="middle" style="fill:#0a111d"><text x="215" y="61" style="fill:#0a111d">T</text><text x="245" y="61" style="fill:#0a111d">T</text><text x="275" y="61" style="fill:#0a111d">T</text><text x="305" y="61" style="fill:#0a111d">T</text><text x="335" y="61" style="fill:#0a111d">T</text><text x="230" y="35" style="fill:#0a111d">T</text><text x="260" y="35" style="fill:#0a111d">T</text><text x="290" y="35" style="fill:#0a111d">T</text><text x="320" y="35" style="fill:#0a111d">T</text><text x="275" y="11" style="fill:#0a111d">T</text></g>
+      <path d="M185 72 L365 72 L345 132 L205 132 Z" fill="#17243b" stroke="#93a6bd" stroke-width="2"/>
+      <g fill="#0d1524" stroke="#93a6bd" stroke-width="3"><circle cx="228" cy="152" r="36"/><circle cx="326" cy="152" r="36"/></g>
+      <g stroke="#93a6bd" stroke-width="2"><line x1="228" y1="116" x2="228" y2="188"/><line x1="192" y1="152" x2="264" y2="152"/><line x1="326" y1="116" x2="326" y2="188"/><line x1="290" y1="152" x2="362" y2="152"/></g>
+      <path d="M0 150 Q70 134 140 150 T280 150 T420 150 T520 150 V220 H0 Z" fill="#4a3a2c"/>
+      <circle cx="170" cy="138" r="5" fill="#4a3a2c"/><circle cx="384" cy="132" r="4" fill="#4a3a2c"/><circle cx="398" cy="120" r="3" fill="#4a3a2c"/>
+      <rect x="520" y="150" width="380" height="70" fill="#131e31"/><line x1="520" y1="150" x2="900" y2="150" stroke="#93a6bd" stroke-opacity=".5"/>
+      <path d="M365 104 Q450 124 540 106" fill="none" stroke="#bcc882" stroke-width="3"/>
+      <g stroke="#f4efe4" stroke-width="3" stroke-linecap="round" fill="none"><line x1="580" y1="118" x2="562" y2="88"/><line x1="580" y1="118" x2="598" y2="150"/><line x1="580" y1="118" x2="566" y2="150"/><line x1="563" y1="92" x2="540" y2="106"/></g>
+      <circle cx="556" cy="76" r="11" fill="#17243b" stroke="#f4efe4" stroke-width="3"/>
+      <g stroke="#5ec8d8" stroke-width="3" stroke-linecap="round"><line x1="640" y1="100" x2="700" y2="100"/><path d="M690 90 L702 100 L690 110" fill="none"/></g>
+    </svg>
+    <aside class="notes">Part four. We have lots of AI horsepower and lots of tokens, and the wagon is stuck in the mud. The way out is not more tokens. It is fixing the whole delivery pipeline and pointing AI at the right problems.</aside>
+  </div></section>
+
+  <!-- 9 SIX TRACKS -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow">R&amp;D AI Transformation Program</div>
+    <h2>Fix the <em>whole lifecycle</em></h2>
+    <div class="grid g4">
+      <div class="tile" style="--c:var(--accent)"><svg class="icon"><use href="#i-pencil"/></svg><span class="cap">Spec to design</span></div>
+      <div class="tile" style="--c:var(--accent)"><svg class="icon"><use href="#i-code"/></svg><span class="cap">AI coding</span></div>
+      <div class="tile" style="--c:var(--accent)"><svg class="icon"><use href="#i-flask"/></svg><span class="cap">Testing &amp; envs</span></div>
+      <div class="tile" style="--c:var(--accent)"><svg class="icon"><use href="#i-stairs"/></svg><span class="cap">CI/CD</span></div>
+    </div>
+    <p class="mono" style="--c:var(--green)">Common foundation</p>
+    <div class="tile hl" style="--c:var(--green);flex-direction:row;align-items:center;gap:18px"><svg class="icon"><use href="#i-graph"/></svg><span class="cap">AppsFlyer architecture, services &amp; code context</span></div>
+    <div class="tile hl" style="--c:var(--green);flex-direction:row;align-items:center;gap:18px"><svg class="icon"><use href="#i-store"/></svg><span class="cap">Shared skills, tools &amp; MCPs</span></div>
+    <aside class="notes">This is where the story turns. Only after we hit the wall did we realize that coding is one step in the SDLC and that we had to improve all of it, so we invest across the lifecycle: spec to design, AI coding, testing and environment provisioning, and CI/CD with AI-native pipelines. Under all four sits a common foundation. First, a clear mapped view of our architecture, services and code, rebuilt every night from the repos and exposed to agents; having it is vital for every step of the SDLC, because an agent that does not know our system cannot design, code, test or ship safely. Second, a shared marketplace of skills, tools and MCPs, so every team builds on the same capabilities instead of reinventing them. And then we started to measure value and ROI.</aside>
+  </div></section>
+
+  <!-- 23 CONTEXT GRAPH -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow">Context</div>
+    <h2>Give the agent <em>the map</em></h2>
+    <svg class="diagram" id="ctxGraph" viewBox="0 0 900 340" role="img" aria-label="An agent queries a graph of services through an MCP server"></svg>
+    <aside class="notes">The hardest part for the attribution team was not writing code. It was learning the platform: BigQuery, the logical data layer, deployment rules, with zero prior context. Broad questions got confident but wrong answers; specific questions worked. AF Context is our answer: a catalog and dependency graph of services, who owns them, what they talk to, where the code lives, rebuilt every night and exposed to agents through one MCP server. In a demo, Cursor used it to visualize the Kafka topology of a team, grouped by cluster, tracking messages from producers to topics to consumers.</aside>
+  </div></section>
+
+  <!-- 25 MEASURE -->
+  <section class="slide" style="--era:var(--violet)"><div class="in rise">
+    <div class="eyebrow">Measure the impact</div>
+    <h2>Value, <em>not tokens</em></h2>
+    <div class="grid" style="grid-template-columns:minmax(0,1fr) 40px minmax(0,1.6fr);align-items:center;gap:14px">
+      <div class="tile hl" style="--c:var(--violet)"><svg class="icon lg"><use href="#i-flame"/></svg><span class="cap">AI usage</span><span class="mono">Per group</span></div>
+      <span class="arrowx">↔</span>
+      <div class="grid g2">
+        <div class="tile" style="--c:var(--accent)"><span class="cap">Cycle time</span></div>
+        <div class="tile" style="--c:var(--green)"><span class="cap">Merge requests</span></div>
+        <div class="tile" style="--c:var(--warm)"><span class="cap">Plan vs actual</span></div>
+        <div class="tile" style="--c:var(--red)"><span class="cap">Adoption</span></div>
+      </div>
+    </div>
+    <aside class="notes">Burning tokens is burning money, not proof the effort points the right way. I know CEOs who watch dashboards of tokens used and think more is better. At AppsFlyer we look at classic metrics, cycle time, merge requests, plan versus actual and the cumulative flow, and then correlate their trend with how much AI a group consumes. Not per person. When a group of 30 engineers raises AI consumption, does cycle time shrink? Does customer adoption rise? Often you find no correlation, or a new bottleneck in integration or production. It is a question to steer by, not a KPI.</aside>
+  </div></section>
+
+  <!-- 20 OVERVIEW -->
+  <section class="slide" style="--era:var(--green)"><div class="in rise">
+    <div class="eyebrow">Impact</div>
+    <h2>Pick <em>high ROI bets</em></h2>
+    <div class="grid" style="gap:12px">
+      <div class="tile hl" style="--c:var(--green);flex-direction:row;align-items:center;gap:18px;padding:clamp(10px,1.4vw,16px) clamp(16px,2vw,26px)"><svg class="icon"><use href="#i-graph"/></svg><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span class="mono">Infrastructure migration</span><span class="cap" style="font-size:clamp(17px,2vw,26px)">Neo4j &rarr; relational DB</span></div><span class="mono" style="--c:var(--dim);margin-left:auto;white-space:nowrap">Project 9000</span></div>
+      <div class="tile hl" style="--c:var(--accent);flex-direction:row;align-items:center;gap:18px;padding:clamp(10px,1.4vw,16px) clamp(16px,2vw,26px)"><svg class="icon"><use href="#i-code"/></svg><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span class="mono">Logic transformation</span><span class="cap" style="font-size:clamp(17px,2vw,26px)">Coded attribution logic &rarr; SQL for batch</span></div><span class="mono" style="--c:var(--dim);margin-left:auto;white-space:nowrap">Project 9000</span></div>
+      <div class="tile hl" style="--c:var(--violet);flex-direction:row;align-items:center;gap:18px;padding:clamp(10px,1.4vw,16px) clamp(16px,2vw,26px)"><svg class="icon"><use href="#i-lock"/></svg><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span class="mono">Data deletion</span><span class="cap" style="font-size:clamp(17px,2vw,26px)">Manual GDPR process &rarr; agentic</span></div></div>
+      <div class="tile hl" style="--c:var(--warm);flex-direction:row;align-items:center;gap:18px;padding:clamp(10px,1.4vw,16px) clamp(16px,2vw,26px)"><svg class="icon"><use href="#i-flask"/></svg><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span class="mono">Test data generation</span><span class="cap" style="font-size:clamp(17px,2vw,26px)">Test data + a test env per feature</span></div></div>
+      <div class="tile hl" style="--c:var(--olive);flex-direction:row;align-items:center;gap:18px;padding:clamp(10px,1.4vw,16px) clamp(16px,2vw,26px)"><svg class="icon"><use href="#i-search"/></svg><div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span class="mono">Data platform navigation</span><span class="cap" style="font-size:clamp(17px,2vw,26px)">Queries generated from platform metadata</span></div></div>
+    </div>
+    <aside class="notes">Under this reality, the first rule is to pick bets with a high, clear return. Five concrete examples. Infrastructure migration: moving from Neo4j to a relational database, done in Project 9000. Logic transformation: moving attribution from coded logic to SQL logic for batch processing, also Project 9000. Data deletion: turning the manual GDPR process into an agentic one. Test data generation: generating test data and spinning up a test environment per feature, which attacks the testing bottleneck directly. Data platform navigation: generating queries based on our data platform metadata. What they share: the destination is known, the old way is a reference to compare against, and the effort is repetitive enough for agents to take over. When we rewrite or migrate, do it side by side and ramp gradually; at HP Mercury a big-bang rewrite with zero customers collapsed after a year, and AI makes big bang more tempting because building new is so cheap. Resist it.</aside>
+  </div></section>
+
+  <!-- 27 CLOSE -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow">The take</div>
+    <h2>Build <em>windmills</em></h2>
+    <svg class="diagram" id="windArt" style="max-height:62vh" viewBox="0 0 900 440" role="img" aria-label="A large windmill with turning blades, wind streaks across the sky and swaying grass">
+      <g id="windLines"></g>
+      <path d="M450 190 L416 402 L484 402 Z" fill="#17243b" stroke="#93a6bd" stroke-opacity=".7" stroke-width="2"/>
+      <path d="M440 402 L440 366 Q450 354 460 366 L460 402 Z" fill="#0a111d" stroke="#93a6bd" stroke-opacity=".5"/>
+      <g class="blades fast">
+        <g fill="#5ec8d8" fill-opacity=".88" stroke="#5ec8d8" stroke-width="2">
+          <rect x="450" y="30" width="28" height="104" rx="3"/>
+          <rect x="450" y="30" width="28" height="104" rx="3" transform="rotate(90 450 190)"/>
+          <rect x="450" y="30" width="28" height="104" rx="3" transform="rotate(180 450 190)"/>
+          <rect x="450" y="30" width="28" height="104" rx="3" transform="rotate(270 450 190)"/>
+        </g>
+        <g stroke="#f4efe4" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"><line x1="450" y1="190" x2="450" y2="30"/><line x1="450" y1="190" x2="610" y2="190"/><line x1="450" y1="190" x2="450" y2="350"/><line x1="450" y1="190" x2="290" y2="190"/></g>
+      </g>
+      <circle cx="450" cy="190" r="14" fill="#f2994a"/>
+      <rect x="0" y="400" width="900" height="40" fill="#131e31"/>
+      <line x1="0" y1="400" x2="900" y2="400" stroke="#93a6bd" stroke-opacity=".45"/>
+      <g id="grassBlades"></g>
+    </svg>
+    <aside class="notes">My take on the AI revolution, a little banal: when the storm comes, some hide and some build windmills. It is enormous power, and with great power you need to know how to channel it. Companies that channel it into being more productive and creating more value for their customers will succeed. Companies that misuse it will burn. The signs of success I look for in a year: do we understand much faster whether an idea is feasible, is production more stable, and do our customers get more value.</aside>
+  </div></section>
+
+  <!-- 28 QUESTIONS -->
+  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+    <div class="eyebrow">Thank you</div>
+    <h1>Questions?</h1>
+    <div class="meta"><span>Ruli Weisbach</span><span>/</span><span>EVP of R&amp;D, AppsFlyer</span><span>/</span><span>ruli.weisbach@appsflyer.com</span></div>
+    <aside class="notes">Thank you. Happy to take questions.</aside>
+  </div></section>
+
+  <div class="progress" id="progress"></div>
+  <div class="notes-panel" id="notesPanel" aria-live="polite"><div class="lb">Speaker notes</div><p id="notesText"></p></div>
+  <div class="nav">
+    <div class="grp"><button id="prev" type="button" aria-label="Previous slide">&larr; Prev</button><button id="next" type="button" aria-label="Next slide">Next &rarr;</button></div>
+    <div class="grp"><button id="notesBtn" type="button" aria-pressed="false">Notes <span class="hint">N</span></button><button id="fsBtn" type="button">Full <span class="hint">F</span></button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var counter=document.getElementById('counter'),progress=document.getElementById('progress');
+  var panel=document.getElementById('notesPanel'),notesText=document.getElementById('notesText');
+  var cur=0,total=slides.length;
+
+  function pad(n){return n<10?'0'+n:''+n}
+  function show(i){
+    cur=Math.max(0,Math.min(total-1,i));
+    slides.forEach(function(s,k){s.classList.toggle('active',k===cur)});
+    slides[cur].scrollTop=0;
+    counter.textContent=pad(cur+1)+' / '+pad(total);
+    progress.style.width=((cur+1)/total*100)+'%';
+    var n=slides[cur].querySelector('.notes');
+    notesText.textContent=n?n.textContent:'';
+    try{history.replaceState(null,'','#'+(cur+1))}catch(e){}
+  }
+  function go(d){show(cur+d)}
+
+  document.getElementById('prev').addEventListener('click',function(){go(-1)});
+  document.getElementById('next').addEventListener('click',function(){go(1)});
+  var nb=document.getElementById('notesBtn');
+  function toggleNotes(){var o=panel.classList.toggle('open');nb.setAttribute('aria-pressed',o)}
+  nb.addEventListener('click',toggleNotes);
+  function fs(){
+    try{
+      if(document.fullscreenElement){document.exitFullscreen()}
+      else{var p=document.documentElement.requestFullscreen();if(p&&p.catch)p.catch(function(){})}
+    }catch(e){}
+  }
+  document.getElementById('fsBtn').addEventListener('click',fs);
+  document.addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey)return;
+    var k=e.key;
+    if(k==='ArrowRight'||k==='PageDown'||k===' '){e.preventDefault();go(1)}
+    else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();go(-1)}
+    else if(k==='Home'){show(0)}else if(k==='End'){show(total-1)}
+    else if(k==='n'||k==='N'){toggleNotes()}
+    else if(k==='f'||k==='F'){fs()}
+  });
+  var tx=null,deck=document.getElementById('deck');
+  deck.addEventListener('touchstart',function(e){tx=e.touches[0].clientX},{passive:true});
+  deck.addEventListener('touchend',function(e){
+    if(tx===null)return;var dx=e.changedTouches[0].clientX-tx;tx=null;
+    if(Math.abs(dx)>70)go(dx<0?1:-1);
+  },{passive:true});
+
+  /* ---------- diagrams ---------- */
+  var NS='http://www.w3.org/2000/svg';
+  function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+  function node(g,x,y,label){
+    el('rect',{x:x-50,y:y-18,width:100,height:36,rx:8,fill:'#17243b',stroke:'#93a6bd','stroke-width':1.5},g);
+    var t=el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':12},g);t.textContent=label;
+  }
+  var ys=[35,100,165,230,295];
+  var b=document.getElementById('meshBefore');
+  ys.forEach(function(y1){ys.forEach(function(y2){
+    el('line',{x1:150,y1:y1,x2:750,y2:y2,stroke:'#ef6f6c','stroke-opacity':.35,'stroke-width':1},b)})});
+  ys.forEach(function(y,i){node(b,100,y,'Brand '+(i+1));node(b,800,y,'Partner '+(i+1))});
+  var a=document.getElementById('meshAfter');
+  ys.forEach(function(y){
+    el('line',{x1:150,y1:y,x2:380,y2:165,stroke:'#8fe3a0','stroke-opacity':.7,'stroke-width':1.5},a);
+    el('line',{x1:520,y1:165,x2:750,y2:y,stroke:'#8fe3a0','stroke-opacity':.7,'stroke-width':1.5},a)});
+  ys.forEach(function(y,i){node(a,100,y,'Brand '+(i+1));node(a,800,y,'Partner '+(i+1))});
+  el('circle',{cx:450,cy:165,r:72,fill:'#17243b',stroke:'#8fe3a0','stroke-width':2},a);
+  var h=el('text',{x:450,y:171,'text-anchor':'middle','font-size':16,'font-weight':'500'},a);h.textContent='AppsFlyer';
+
+  /* impact chart */
+  var mr=document.getElementById('mrStack');
+  for(var q2=0;q2<5;q2++){
+    el('rect',{x:292+q2*24,y:14+(q2%2)*8,width:56,height:34,rx:5,fill:'#17243b',stroke:'#5ec8d8','stroke-width':1.5},mr);
+    var mt2=el('text',{x:320+q2*24,y:36+(q2%2)*8,'text-anchor':'middle','font-size':11},mr);mt2.textContent='MR';
+  }
+  function drawPanel(id,top,base,axis,marks,qs){
+    var g=document.getElementById(id);
+    el('line',{x1:120,y1:axis,x2:880,y2:axis,stroke:'#93a6bd','stroke-opacity':.4},g);
+    marks.forEach(function(x){
+      var hot=Math.abs(x-560)<1&&marks.length<8;
+      el('line',{x1:x,y1:top,x2:x,y2:axis,stroke:hot?'#ef6f6c':'#93a6bd','stroke-opacity':hot?.9:.3,'stroke-dasharray':'3 5','stroke-width':hot?2:1},g);
+      el('circle',{cx:x,cy:top,r:hot?7:4,fill:hot?'#ef6f6c':'#aa9ef0'},g);
+    });
+    var pts=[];
+    for(var x=120;x<=880;x+=8){
+      var y=base+Math.sin(x/37)*5+Math.sin(x/11)*3;
+      y-=60*Math.exp(-Math.pow((x-560)/34,2));
+      pts.push(x+','+y.toFixed(1));
+    }
+    el('polyline',{points:pts.join(' '),fill:'none',stroke:'#5ec8d8','stroke-width':3,'stroke-linejoin':'round'},g);
+    el('circle',{cx:560,cy:base-60,r:7,fill:'#ef6f6c'},g);
+    qs.forEach(function(x){var t=el('text',{x:x,y:top-10,'text-anchor':'middle','font-size':17,class:'wm'},g);t.textContent='?'});
+  }
+  drawPanel('panelA',112,170,200,[190,330,470,560,720],[]);
+  var tA=el('text',{x:590,y:128,'font-size':13,class:'gr'},document.getElementById('panelA'));tA.textContent='\u2190 one clear cause';
+  var dense=[];for(var dx=130;dx<=870;dx+=22)dense.push(dx);
+  drawPanel('panelB',260,318,348,dense,[492,536,580,624]);
+  var tB=el('text',{x:690,y:262,'font-size':13,class:'rd'},document.getElementById('panelB'));tB.textContent='which one?';
+
+  /* context graph */
+  var cg=document.getElementById('ctxGraph');
+  var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+  var N=[];for(var i=0;i<38;i++)N.push({x:270+rnd()*590,y:20+rnd()*300});
+  var hub={x:230,y:170};
+  var E=[];
+  N.forEach(function(p,i){
+    var d=N.map(function(q,j){return{j:j,d:j===i?1e9:Math.hypot(p.x-q.x,p.y-q.y)}}).sort(function(u,v){return u.d-v.d});
+    [d[0].j,d[1].j].forEach(function(j){if(i<j||true)E.push([i,j])});
+  });
+  E.forEach(function(e){el('line',{x1:N[e[0]].x,y1:N[e[0]].y,x2:N[e[1]].x,y2:N[e[1]].y,stroke:'#93a6bd','stroke-opacity':.28,'stroke-width':1},cg)});
+  var path=[],used={},best=0,bd=1e9;
+  N.forEach(function(p,i){var d=Math.hypot(p.x-hub.x,p.y-hub.y);if(d<bd){bd=d;best=i}});
+  path.push(best);used[best]=1;
+  for(var s=0;s<6;s++){
+    var c=N[path[path.length-1]],nx=-1,nd=1e9;
+    N.forEach(function(q,j){if(!used[j]&&q.x>c.x-5){var d=Math.hypot(q.x-c.x,q.y-c.y);if(d<nd){nd=d;nx=j}}});
+    if(nx<0)break;path.push(nx);used[nx]=1;
+  }
+  el('line',{x1:hub.x,y1:hub.y,x2:N[path[0]].x,y2:N[path[0]].y,stroke:'#5ec8d8','stroke-width':3},cg);
+  for(var k=0;k<path.length-1;k++)el('line',{x1:N[path[k]].x,y1:N[path[k]].y,x2:N[path[k+1]].x,y2:N[path[k+1]].y,stroke:'#5ec8d8','stroke-width':3},cg);
+  N.forEach(function(p,i){el('circle',{cx:p.x,cy:p.y,r:used[i]?7:5,fill:used[i]?'#5ec8d8':'#17243b',stroke:used[i]?'#5ec8d8':'#93a6bd','stroke-width':1.5},cg)});
+  el('line',{x1:100,y1:170,x2:hub.x,y2:hub.y,stroke:'#8fe3a0','stroke-width':3,'stroke-dasharray':'2 6','stroke-linecap':'round'},cg);
+  el('circle',{cx:hub.x,cy:hub.y,r:12,fill:'#8fe3a0'},cg);
+  el('rect',{x:20,y:148,width:82,height:44,rx:10,fill:'#17243b',stroke:'#8fe3a0','stroke-width':1.5},cg);
+  var at=el('text',{x:61,y:175,'text-anchor':'middle','font-size':13},cg);at.textContent='Agent';
+  var mt=el('text',{x:165,y:152,'text-anchor':'middle','font-size':12,class:'gr'},cg);mt.textContent='MCP';
+  var gt=el('text',{x:560,y:336,'text-anchor':'middle','font-size':12,class:'dm'},cg);gt.textContent='services · owners · dependencies';
+
+
+  /* CEO art */
+  var ce=document.getElementById('ceoArt'),coins=[[720,140,.9],[770,110,.8],[815,82,.7],[760,60,.55],[850,50,.45],[800,28,.35],[878,120,.6]];
+  for(var r=0;r<3;r++)for(var c=0;c<6;c++){
+    var cx=345+c*52,cy=205+r*50;
+    el('rect',{x:cx-13,y:cy+2,width:26,height:15,rx:3,fill:'#5ec8d8','fill-opacity':.22,stroke:'#5ec8d8','stroke-width':1},ce);
+    el('circle',{cx:cx,cy:cy-12,r:9,fill:'#17243b',stroke:'#93a6bd','stroke-width':1.5},ce);
+    el('path',{d:'M'+(cx-12)+' '+(cy+2)+' Q'+cx+' '+(cy-10)+' '+(cx+12)+' '+(cy+2),fill:'none',stroke:'#93a6bd','stroke-width':1.5},ce);
+    if((r*6+c)%4===1){var q=el('text',{x:cx,y:cy-26,'text-anchor':'middle','font-size':13,class:'wm'},ce);q.textContent='!?'}
+  }
+  coins.forEach(function(k){
+    el('circle',{cx:k[0],cy:k[1],r:11,fill:'#f2994a','fill-opacity':k[2]},ce);
+    var t=el('text',{x:k[0],y:k[1]+4,'text-anchor':'middle','font-size':11,style:'fill:#0a111d'},ce);t.textContent='T';
+  });
+
+  /* token trend */
+  var tc=document.getElementById('tokenChart');
+  el('line',{x1:0,y1:190,x2:400,y2:190,stroke:'#93a6bd','stroke-opacity':.4},tc);
+  for(var i=0;i<12;i++){
+    var bh=4*Math.pow(1.4,i);
+    el('rect',{x:8+i*32,y:190-bh,width:22,height:bh,rx:3,fill:i<7?'#5ec8d8':(i<10?'#f2994a':'#ef6f6c')},tc);
+  }
+  var t1=el('text',{x:8,y:209,'font-size':11,class:'dm'},tc);t1.textContent='then';
+  var t2=el('text',{x:392,y:209,'text-anchor':'end','font-size':11,class:'dm'},tc);t2.textContent='now';
+
+  /* wall */
+  var wa=document.getElementById('wallArt');
+  for(var br=0;br<6;br++)for(var bc=0;bc<4;bc++){
+    el('rect',{x:650+bc*40+(br%2?20:0),y:26+br*24,width:38,height:22,rx:2,fill:'#ef6f6c','fill-opacity':.16,stroke:'#ef6f6c','stroke-opacity':.55},wa);
+  }
+  var sp=[];for(var si=0;si<10;si++){var ang=si*Math.PI/5,rr=si%2?16:34;sp.push((624+Math.cos(ang)*rr).toFixed(1)+','+(110+Math.sin(ang)*rr).toFixed(1))}
+  el('polygon',{points:sp.join(' '),fill:'#f2994a'},wa);
+  [[596,52,-20],[610,148,25],[580,150,-35],[600,28,15]].forEach(function(k){el('rect',{x:k[0],y:k[1],width:16,height:10,rx:2,fill:'#ef6f6c','fill-opacity':.6,transform:'rotate('+k[2]+' '+(k[0]+8)+' '+(k[1]+5)+')'},wa)});
+
+
+  /* wind + grass */
+  var wl=document.getElementById('windLines'),gb=document.getElementById('grassBlades');
+  [[0,50,4.2,0],[0,105,3.4,-1],[0,160,5,-2],[0,230,3.8,-.5],[0,290,4.6,-1.5],[0,345,3.2,-2.5]].forEach(function(w,n){
+    var d='M0 '+w[1]+' c60 -18 120 18 180 0 s120 -18 180 0 s120 18 180 0 s120 -18 180 0 s120 18 180 0';
+    var l=el('path',{d:d,fill:'none',stroke:'#f4efe4','stroke-opacity':.28,'stroke-width':2.5,'stroke-linecap':'round',class:'windline'},wl);
+    l.style.animationDuration=w[2]+'s';l.style.animationDelay=w[3]+'s';
+  });
+  var gs=11;function gr(){gs=(gs*16807)%2147483647;return gs/2147483647}
+  for(var gx=2;gx<900;gx+=9){
+    var gh=16+gr()*34,lean=6+gr()*10;
+    var g=el('path',{d:'M'+gx+' 402 Q'+gx+' '+(402-gh*.6)+' '+(gx+lean)+' '+(402-gh),fill:'none',stroke:gr()>.5?'#8fe3a0':'#bcc882','stroke-opacity':.5+gr()*.4,'stroke-width':2.4,'stroke-linecap':'round',class:'grass'},gb);
+    g.style.animationDelay=(-gr()*2.2)+'s';g.style.animationDuration=(1.8+gr()*1.2)+'s';
+  }
+
+  var m=(location.hash||'').match(/^#(\d+)$/);
+  show(m?parseInt(m[1],10)-1:0);
+})();
+(function(){
+  var cv=document.getElementById('coverArt');
+  if(!cv||!cv.getContext)return;
+  var ctx=cv.getContext('2d'),W=0,H=0,P=[],M=[],RP=[],last=0,mrT=0;
+  var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function ss(a,b,x){x=Math.max(0,Math.min(1,(x-a)/(b-a)));return x*x*(3-2*x)}
+  function k(x){var cx=W*.74;return x<cx?ss(W*.25,cx,x):1-ss(cx,W,x)}
+  function ypos(p,x){var cy=H*.5,kk=k(x);return cy+(p.b-cy)*(1-.82*kk)+Math.sin(x*.006+p.ph)*p.a*(1-.7*kk)}
+  function mk(init){return{x:init?Math.random()*W:-10,b:H*(.04+Math.random()*.92),a:6+Math.random()*22,ph:Math.random()*6.28,v:40+Math.random()*110,s:.8+Math.random()*1.5,g:Math.random()<.16}}
+  function size(){
+    var dpr=Math.min(2,window.devicePixelRatio||1);
+    W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+    var n=Math.round(Math.min(420,W*H/3400));P=[];for(var i=0;i<n;i++)P.push(mk(true));
+  }
+  function frame(now){
+    requestAnimationFrame(frame);
+    if(cv.offsetParent===null)return;
+    if(W!==cv.clientWidth||H!==cv.clientHeight){size()}
+    var dt=Math.min(.05,(now-(last||now))/1000);last=now;
+    draw(dt);
+  }
+  function draw(dt){
+    var cx=W*.74,cy=H*.5,m=Math.min(W,H);
+    ctx.clearRect(0,0,W,H);
+    var g=ctx.createRadialGradient(cx,cy,0,cx,cy,m*.3);
+    g.addColorStop(0,'rgba(94,200,216,.22)');g.addColorStop(1,'rgba(94,200,216,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(cx,cy,m*.3,0,6.283);ctx.fill();
+    ctx.lineWidth=1.2;
+    [.11,.17,.23].forEach(function(r,i){ctx.strokeStyle='rgba(94,200,216,'+(.32-i*.08)+')';ctx.beginPath();ctx.arc(cx,cy,m*r,0,6.283);ctx.stroke()});
+    P.forEach(function(p){
+      p.x+=p.v*dt;if(p.x>W+10){var q=mk(false);for(var f in q)p[f]=q[f]}
+      var al=(.3+.7*ss(W*.2,W*.7,p.x))*(.35+.65*(1-Math.abs(p.x-cx)/W*0)),near=Math.abs(p.x-cx)<W*.035;
+      ctx.fillStyle=p.g?'rgba(143,227,160,'+(al*.8)+')':'rgba(94,200,216,'+(near?Math.min(1,al*1.6):al*.75)+')';
+      ctx.beginPath();ctx.arc(p.x,ypos(p,p.x),near?p.s*1.5:p.s,0,6.283);ctx.fill();
+    });
+    mrT-=dt;
+    if(mrT<=0){mrT=.8+Math.random()*.6;var q2=mk(false);q2.v=150+Math.random()*50;q2.mr=1;M.push(q2)}
+    for(var i=M.length-1;i>=0;i--){
+      var p=M[i],px=p.x;p.x+=p.v*dt;
+      if(px<cx&&p.x>=cx)RP.push({r:0,t:0});
+      if(p.x>W+40){M.splice(i,1);continue}
+      ctx.strokeStyle='rgba(242,153,74,.55)';ctx.lineWidth=2;ctx.beginPath();
+      for(var xx=p.x-60;xx<=p.x;xx+=6){var yy=ypos(p,xx);if(xx===p.x-60)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy)}
+      ctx.stroke();
+      ctx.fillStyle='#f2994a';ctx.beginPath();ctx.arc(p.x,ypos(p,p.x),3.4,0,6.283);ctx.fill();
+    }
+    for(var j=RP.length-1;j>=0;j--){
+      var r=RP[j];r.t+=dt;if(r.t>1.6){RP.splice(j,1);continue}
+      var u=r.t/1.6;ctx.strokeStyle='rgba(242,153,74,'+(.7*(1-u))+')';ctx.lineWidth=2.2;
+      ctx.beginPath();ctx.arc(cx,cy,m*(.1+.3*u),0,6.283);ctx.stroke();
+    }
+    ctx.fillStyle='rgba(244,239,228,.9)';ctx.beginPath();ctx.arc(cx,cy,4,0,6.283);ctx.fill();
+  }
+  if(reduce){size();draw(0)}else{requestAnimationFrame(frame)}
+})();
+</script>
+
+</body>
+</html>
