@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>AI Adoption Meets High Scale Production</title>
+
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;0,900;1,600;1,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -110,7 +111,7 @@ p{margin:0;line-height:1.5}
 .blades{transform-box:fill-box;transform-origin:center;animation:spin 14s linear infinite}
 .blades.fast{animation-duration:7s}
 @keyframes sway{from{transform:skewX(-7deg)}to{transform:skewX(11deg)}}
-@keyframes wind{to{stroke-dashoffset:-320}}
+@keyframes wind{to{stroke-dashoffset:-400}}
 .grass{transform-box:fill-box;transform-origin:50% 100%;animation:sway 2.2s ease-in-out infinite alternate}
 .windline{stroke-dasharray:110 90;animation:wind 4s linear infinite}
 @media (prefers-reduced-motion:reduce){.grass,.windline{animation:none}.blades.fast{animation:none}}
@@ -125,10 +126,10 @@ p{margin:0;line-height:1.5}
   .nav .hint{display:none}
 }
 </style>
+
+
 </head>
 <body>
-
-
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <symbol id="i-code" viewBox="0 0 24 24"><polyline points="8 6 2 12 8 18"/><polyline points="16 6 22 12 16 18"/><line x1="14" y1="4" x2="10" y2="20"/></symbol>
   <symbol id="i-flask" viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/><line x1="7.5" y1="15" x2="16.5" y2="15"/></symbol>
@@ -389,7 +390,7 @@ p{margin:0;line-height:1.5}
 
   <!-- 17 MONITORING -->
   <section class="slide" style="--era:var(--warm)"><div class="in rise">
-    <div class="eyebrow">Bottleneck 4 &middot; Monitoring</div>
+    <div class="eyebrow">Bottleneck 3 &middot; Monitoring</div>
     <h2>Which change <em>caused the incident?</em></h2>
     <svg class="diagram" id="impactChart" viewBox="0 0 900 360" role="img" aria-label="With AI coding, engineers generate more merge requests faster and push more to production. Before AI a metric spike lines up with one obvious deploy; with AI there are so many deploys that nobody can tell which one caused it.">
       <g font-size="14">
@@ -411,7 +412,7 @@ p{margin:0;line-height:1.5}
   <section class="slide divider" style="--era:var(--green)"><div class="in rise">
     <div class="part">Part 04</div>
     <p class="word">Moving forward</p>
-    <svg class="diagram" style="max-height:220px" viewBox="0 0 900 220" role="img" aria-label="A wagon full of AI tokens stuck in mud is pulled out onto dry ground">
+    <svg class="diagram" style="max-height:240px" viewBox="0 -24 900 244" role="img" aria-label="A wagon full of AI tokens stuck in mud is pulled out onto dry ground">
       <g fill="#f2994a">
         <circle cx="215" cy="56" r="14"/><circle cx="245" cy="56" r="14"/><circle cx="275" cy="56" r="14"/><circle cx="305" cy="56" r="14"/><circle cx="335" cy="56" r="14"/>
         <circle cx="230" cy="30" r="14"/><circle cx="260" cy="30" r="14"/><circle cx="290" cy="30" r="14"/><circle cx="320" cy="30" r="14"/><circle cx="275" cy="6" r="14"/>
@@ -488,10 +489,12 @@ p{margin:0;line-height:1.5}
   </div></section>
 
   <!-- 27 CLOSE -->
-  <section class="slide" style="--era:var(--accent)"><div class="in rise">
+  <section class="slide" style="--era:var(--accent);padding-bottom:0"><div class="in rise">
+    <div style="width:100%;max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(16px,2.6vh,30px)">
     <div class="eyebrow">The take</div>
     <h2>Build <em>windmills</em></h2>
-    <svg class="diagram" id="windArt" style="max-height:62vh" viewBox="0 0 900 440" role="img" aria-label="A large windmill with turning blades, wind streaks across the sky and swaying grass">
+    </div>
+    <svg class="diagram" id="windArt" style="--pad:clamp(20px,5vw,72px);width:calc(100% + 2*var(--pad));max-width:none;margin-inline:calc(-1*var(--pad));height:clamp(260px,62vh,820px)" preserveAspectRatio="xMidYMax meet" viewBox="0 0 900 440" role="img" aria-label="A large windmill with turning blades, wind streaks across the sky and swaying grass">
       <g id="windLines"></g>
       <path d="M450 190 L416 402 L484 402 Z" fill="#17243b" stroke="#93a6bd" stroke-opacity=".7" stroke-width="2"/>
       <path d="M440 402 L440 366 Q450 354 460 366 L460 402 Z" fill="#0a111d" stroke="#93a6bd" stroke-opacity=".5"/>
@@ -505,8 +508,8 @@ p{margin:0;line-height:1.5}
         <g stroke="#f4efe4" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"><line x1="450" y1="190" x2="450" y2="30"/><line x1="450" y1="190" x2="610" y2="190"/><line x1="450" y1="190" x2="450" y2="350"/><line x1="450" y1="190" x2="290" y2="190"/></g>
       </g>
       <circle cx="450" cy="190" r="14" fill="#f2994a"/>
-      <rect x="0" y="400" width="900" height="40" fill="#131e31"/>
-      <line x1="0" y1="400" x2="900" y2="400" stroke="#93a6bd" stroke-opacity=".45"/>
+      <rect x="-1200" y="400" width="3300" height="40" fill="#131e31"/>
+      <line x1="-1200" y1="400" x2="2100" y2="400" stroke="#93a6bd" stroke-opacity=".45"/>
       <g id="grassBlades"></g>
     </svg>
     <aside class="notes">My take on the AI revolution, a little banal: when the storm comes, some hide and some build windmills. It is enormous power, and with great power you need to know how to channel it. Companies that channel it into being more productive and creating more value for their customers will succeed. Companies that misuse it will burn. The signs of success I look for in a year: do we understand much faster whether an idea is feasible, is production more stable, and do our customers get more value.</aside>
@@ -742,12 +745,13 @@ p{margin:0;line-height:1.5}
   /* wind + grass */
   var wl=document.getElementById('windLines'),gb=document.getElementById('grassBlades');
   [[0,50,4.2,0],[0,105,3.4,-1],[0,160,5,-2],[0,230,3.8,-.5],[0,290,4.6,-1.5],[0,345,3.2,-2.5]].forEach(function(w,n){
-    var d='M0 '+w[1]+' c60 -18 120 18 180 0 s120 -18 180 0 s120 18 180 0 s120 -18 180 0 s120 18 180 0';
+    var d='M-1200 '+w[1]+' c60 -18 120 18 180 0';
+    for(var k=0;k<17;k++){d+=' s120 '+(k%2?'18':'-18')+' 180 0'}
     var l=el('path',{d:d,fill:'none',stroke:'#f4efe4','stroke-opacity':.28,'stroke-width':2.5,'stroke-linecap':'round',class:'windline'},wl);
     l.style.animationDuration=w[2]+'s';l.style.animationDelay=w[3]+'s';
   });
   var gs=11;function gr(){gs=(gs*16807)%2147483647;return gs/2147483647}
-  for(var gx=2;gx<900;gx+=9){
+  for(var gx=-1200;gx<2100;gx+=9){
     var gh=16+gr()*34,lean=6+gr()*10;
     var g=el('path',{d:'M'+gx+' 402 Q'+gx+' '+(402-gh*.6)+' '+(gx+lean)+' '+(402-gh),fill:'none',stroke:gr()>.5?'#8fe3a0':'#bcc882','stroke-opacity':.5+gr()*.4,'stroke-width':2.4,'stroke-linecap':'round',class:'grass'},gb);
     g.style.animationDelay=(-gr()*2.2)+'s';g.style.animationDuration=(1.8+gr()*1.2)+'s';
